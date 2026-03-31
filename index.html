@@ -1,0 +1,195 @@
+﻿<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#1f6feb">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="订购补款">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="icon" href="icons/icon-192.png" sizes="192x192">
+  <link rel="stylesheet" href="style.css">
+  <title>商品订购条目 / 补款管理</title>
+</head>
+<body>
+  <div class="app-shell">
+    <section class="tab-section" aria-label="页面切换">
+      <div class="tab-group">
+        <button id="tabListBtn" type="button" class="tab-btn active">条目列表</button>
+        <button id="tabStatsBtn" type="button" class="tab-btn">统计 / 数据</button>
+      </div>
+    </section>
+
+    <main>
+      <div id="listView" class="view">
+        <section class="quick-actions" aria-label="快捷操作">
+          <div class="quick-action-grid">
+            <button id="openAddModalBtn" type="button" class="btn secondary">新增条目</button>
+            <button id="openFilterModalBtn" type="button" class="btn secondary">筛选</button>
+          </div>
+        </section>
+
+        <section class="list-section" aria-label="条目列表">
+          <h2>条目列表</h2>
+          <p id="filterSummary" class="filter-summary">当前筛选：全部条目</p>
+          <p id="emptyState" class="empty-state">暂无条目，点击上方“新增条目”开始记录。</p>
+          <div id="recordList" class="record-list"></div>
+        </section>
+      </div>
+
+      <div id="statsView" class="view hidden">
+        <section class="stats-section" aria-label="统计">
+          <h2>统计</h2>
+          <div class="stats-grid">
+            <article class="stat-card">
+              <span class="stat-label">未补款订金</span>
+              <strong id="statUnpaidDeposit" class="stat-value">¥0.00</strong>
+            </article>
+            <article class="stat-card">
+              <span class="stat-label">未补款金额</span>
+              <strong id="statUnpaidTail" class="stat-value">¥0.00</strong>
+            </article>
+            <article class="stat-card">
+              <span class="stat-label">已消费（不含未补款）</span>
+              <strong id="statSpent" class="stat-value">¥0.00</strong>
+            </article>
+            <article class="stat-card">
+              <span class="stat-label">总消费（含未补款）</span>
+              <strong id="statTotal" class="stat-value">¥0.00</strong>
+            </article>
+          </div>
+        </section>
+
+        <section class="tool-section" aria-label="数据操作">
+          <h2>数据操作</h2>
+          <div class="tool-actions">
+            <button id="exportBtn" type="button" class="btn secondary">导出 JSON</button>
+            <button id="importBtn" type="button" class="btn secondary">导入 JSON（覆盖）</button>
+            <button id="clearBtn" type="button" class="btn danger">清空全部条目</button>
+            <input id="importInput" type="file" accept="application/json" hidden>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <div id="entryModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="formTitle">
+    <div class="modal-panel">
+      <div class="modal-head">
+        <button id="closeModalBtn" type="button" class="nav-btn">关闭</button>
+        <h2 id="formTitle">新增条目</h2>
+        <span class="nav-placeholder" aria-hidden="true"></span>
+      </div>
+
+      <form id="recordForm" novalidate>
+        <div class="ios-form">
+          <section class="ios-group">
+            <h3 class="ios-group-title">基础信息</h3>
+            <div class="ios-card">
+              <label class="ios-row">
+                <span class="ios-row-label">商品名称 <span class="required">*</span></span>
+                <input id="productName" name="productName" type="text" required maxlength="100" placeholder="例如：手办 A">
+              </label>
+              <label class="ios-row">
+                <span class="ios-row-label">厂商 <span class="required">*</span></span>
+                <input id="vendor" name="vendor" type="text" required maxlength="100" placeholder="例如：厂商 X">
+              </label>
+            </div>
+          </section>
+
+          <section class="ios-group">
+            <h3 class="ios-group-title">金额</h3>
+            <div class="ios-card">
+              <label class="ios-row">
+                <span class="ios-row-label">订金</span>
+                <input id="deposit" name="deposit" type="number" inputmode="decimal" min="0" step="0.01" value="0">
+              </label>
+              <label class="ios-row">
+                <span class="ios-row-label">补款</span>
+                <input id="tailPayment" name="tailPayment" type="number" inputmode="decimal" min="0" step="0.01" value="0">
+              </label>
+              <label class="ios-row">
+                <span class="ios-row-label">优惠</span>
+                <input id="discount" name="discount" type="number" inputmode="decimal" min="0" step="0.01" value="0">
+              </label>
+              <label class="ios-row">
+                <span class="ios-row-label">总价（自动）</span>
+                <input id="totalPrice" name="totalPrice" type="text" readonly value="0.00">
+              </label>
+            </div>
+          </section>
+
+          <section class="ios-group">
+            <h3 class="ios-group-title">日期与状态</h3>
+            <div class="ios-card">
+              <label class="ios-row">
+                <span class="ios-row-label">订购日期</span>
+                <input id="orderDate" name="orderDate" type="date">
+              </label>
+              <label class="ios-row">
+                <span class="ios-row-label">入手日期</span>
+                <input id="arrivalDate" name="arrivalDate" type="date">
+              </label>
+              <label class="ios-row">
+                <span class="ios-row-label">补款状态</span>
+                <select id="paymentStatus" name="paymentStatus">
+                  <option value="未补">未补</option>
+                  <option value="已补">已补</option>
+                </select>
+              </label>
+            </div>
+          </section>
+        </div>
+
+        <div class="form-actions">
+          <button id="submitBtn" type="submit" class="btn primary">新增条目</button>
+          <button id="cancelEditBtn" type="button" class="btn secondary hidden">取消编辑</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="filterModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="filterTitle">
+    <div class="modal-panel modal-panel-filter">
+      <div class="modal-head">
+        <button id="closeFilterModalBtn" type="button" class="nav-btn">关闭</button>
+        <h2 id="filterTitle">筛选</h2>
+        <span class="nav-placeholder" aria-hidden="true"></span>
+      </div>
+
+      <div class="ios-form">
+        <section class="ios-group">
+          <h3 class="ios-group-title">筛选条件</h3>
+          <div class="ios-card">
+            <label class="ios-row">
+              <span class="ios-row-label">商品名称</span>
+              <input id="searchName" type="text" placeholder="输入名称关键词">
+            </label>
+            <label class="ios-row">
+              <span class="ios-row-label">厂商</span>
+              <input id="searchVendor" type="text" placeholder="输入厂商关键词">
+            </label>
+            <label class="ios-row">
+              <span class="ios-row-label">补款状态</span>
+              <select id="statusFilter">
+                <option value="全部">全部</option>
+                <option value="未补">未补</option>
+                <option value="已补">已补</option>
+              </select>
+            </label>
+          </div>
+        </section>
+      </div>
+
+      <div class="filter-actions">
+        <button id="applyFilterBtn" type="button" class="btn primary">应用筛选</button>
+        <button id="resetFilterBtn" type="button" class="btn ghost">重置筛选</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

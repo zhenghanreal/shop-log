@@ -1,0 +1,22 @@
+﻿{
+  "name": "商品订购记录 / 补款管理（离线版）",
+  "short_name": "订购补款",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "theme_color": "#1f6feb",
+  "background_color": "#f4f8ff",
+  "description": "完全离线可用的商品订购记录与补款管理工具，数据只保存在本地。",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
