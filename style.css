@@ -90,7 +90,7 @@ h2 {
   min-height: 36px;
   background: transparent;
   color: #5b5b60;
-  font-size: 0.92rem;
+  font-size: 0.75rem;
   font-weight: 600;
   cursor: pointer;
 }
@@ -119,6 +119,7 @@ button {
   min-height: 44px;
   padding: 10px 12px;
   font-weight: 600;
+  font-size: 12px;
   cursor: pointer;
 }
 
@@ -196,6 +197,7 @@ select:focus-visible {
   padding: 12px;
   display: grid;
   gap: 10px;
+  cursor: pointer;
 }
 
 .record-top {
@@ -210,6 +212,22 @@ select:focus-visible {
   font-size: 1rem;
   font-weight: 700;
   color: #111111;
+}
+
+.delete-top-btn {
+  border: 1px solid #ffd9d6;
+  background: #fff5f4;
+  color: #d3473f;
+  border-radius: 10px;
+  min-height: 30px;
+  padding: 4px 10px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.delete-top-btn:active {
+  background: #ffeceb;
 }
 
 .record-vendor {
@@ -237,7 +255,7 @@ select:focus-visible {
 
 .record-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
 }
 
@@ -259,15 +277,22 @@ select:focus-visible {
   color: #2a2a2f;
 }
 
-.record-actions {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
+.record-item .status-chip {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 3px 10px;
+  font-size: 0.78rem;
+  font-weight: 600;
 }
 
-.record-actions .btn {
-  min-height: 40px;
-  font-size: 0.88rem;
+.record-item .status-chip.unpaid {
+  background: var(--orange-bg);
+  color: var(--orange-text);
+}
+
+.record-item .status-chip.paid {
+  background: var(--green-bg);
+  color: var(--green-text);
 }
 
 .stats-grid {
@@ -307,6 +332,35 @@ select:focus-visible {
 
 .form-actions {
   margin-top: 12px;
+}
+
+.filter-actions {
+  margin-top: 12px;
+}
+
+.confirm-box {
+  margin-top: 12px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 14px;
+}
+
+.confirm-text {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #1f1f24;
+  line-height: 1.5;
+}
+
+.confirm-text strong {
+  color: #111111;
+}
+
+.confirm-subtext {
+  margin: 6px 0 0;
+  font-size: 0.82rem;
+  color: var(--muted);
 }
 
 .hidden {

@@ -3,6 +3,7 @@
 const STORAGE_KEY = 'orderRecords_v1';
 let records = [];
 let editingRecordId = null;
+let pendingDeleteId = null;
 
 const dom = {
   tabListBtn: document.getElementById('tabListBtn'),
@@ -13,9 +14,14 @@ const dom = {
   openFilterModalBtn: document.getElementById('openFilterModalBtn'),
   entryModal: document.getElementById('entryModal'),
   filterModal: document.getElementById('filterModal'),
+  deleteModal: document.getElementById('deleteModal'),
   closeModalBtn: document.getElementById('closeModalBtn'),
   closeFilterModalBtn: document.getElementById('closeFilterModalBtn'),
+  closeDeleteModalBtn: document.getElementById('closeDeleteModalBtn'),
   applyFilterBtn: document.getElementById('applyFilterBtn'),
+  confirmDeleteBtn: document.getElementById('confirmDeleteBtn'),
+  cancelDeleteBtn: document.getElementById('cancelDeleteBtn'),
+  deleteTargetName: document.getElementById('deleteTargetName'),
   recordForm: document.getElementById('recordForm'),
   formTitle: document.getElementById('formTitle'),
   submitBtn: document.getElementById('submitBtn'),
@@ -69,7 +75,10 @@ function bindEvents() {
   dom.openFilterModalBtn.addEventListener('click', openFilterModal);
   dom.closeModalBtn.addEventListener('click', closeModal);
   dom.closeFilterModalBtn.addEventListener('click', closeFilterModal);
+  dom.closeDeleteModalBtn.addEventListener('click', closeDeleteModal);
   dom.applyFilterBtn.addEventListener('click', applyFilters);
+  dom.confirmDeleteBtn.addEventListener('click', confirmDeleteRecord);
+  dom.cancelDeleteBtn.addEventListener('click', closeDeleteModal);
 
   dom.entryModal.addEventListener('click', function (event) {
     if (event.target === dom.entryModal) {
@@ -81,9 +90,19 @@ function bindEvents() {
       closeFilterModal();
     }
   });
+  dom.deleteModal.addEventListener('click', function (event) {
+    if (event.target === dom.deleteModal) {
+      closeDeleteModal();
+    }
+  });
 
   document.addEventListener('keydown', function (event) {
     if (event.key !== 'Escape') return;
+
+    if (!dom.deleteModal.classList.contains('hidden')) {
+      closeDeleteModal();
+      return;
+    }
 
     if (!dom.filterModal.classList.contains('hidden')) {
       closeFilterModal();
@@ -110,20 +129,17 @@ function bindEvents() {
   dom.importInput.addEventListener('change', importRecords);
   dom.clearBtn.addEventListener('click', clearAllRecords);
 
-  // 列表按钮使用事件委托，避免每次渲染都重复绑定。
+  // 列表交互使用事件委托：点击卡片编辑，点击删除按钮删除。
   dom.recordList.addEventListener('click', function (event) {
-    const button = event.target.closest('button[data-action]');
-    if (!button) return;
-
-    const action = button.dataset.action;
-    const id = button.dataset.id;
-
-    if (action === 'edit') {
-      enterEditMode(id);
+    const deleteButton = event.target.closest('button[data-action=\"delete\"]');
+    if (deleteButton) {
+      openDeleteModal(deleteButton.dataset.id);
+      return;
     }
-    if (action === 'delete') {
-      deleteRecord(id);
-    }
+
+    const card = event.target.closest('.record-card[data-id]');
+    if (!card) return;
+    enterEditMode(card.dataset.id);
   });
 }
 
@@ -165,6 +181,35 @@ function closeFilterModal() {
   updateModalBodyState();
 }
 
+function openDeleteModal(id) {
+  const target = records.find(function (item) {
+    return item.id === id;
+  });
+  if (!target) return;
+
+  pendingDeleteId = id;
+  dom.deleteTargetName.textContent = target.productName;
+  dom.deleteModal.classList.remove('hidden');
+  updateModalBodyState();
+}
+
+function closeDeleteModal() {
+  dom.deleteModal.classList.add('hidden');
+  pendingDeleteId = null;
+  dom.deleteTargetName.textContent = '-';
+  updateModalBodyState();
+}
+
+function confirmDeleteRecord() {
+  if (!pendingDeleteId) {
+    closeDeleteModal();
+    return;
+  }
+
+  deleteRecord(pendingDeleteId);
+  closeDeleteModal();
+}
+
 function applyFilters() {
   renderList();
   closeFilterModal();
@@ -173,7 +218,8 @@ function applyFilters() {
 function updateModalBodyState() {
   const hasOpenModal =
     !dom.entryModal.classList.contains('hidden') ||
-    !dom.filterModal.classList.contains('hidden');
+    !dom.filterModal.classList.contains('hidden') ||
+    !dom.deleteModal.classList.contains('hidden');
   document.body.classList.toggle('modal-open', hasOpenModal);
 }
 
@@ -380,17 +426,18 @@ function exitEditMode() {
 }
 
 function deleteRecord(id) {
-  const target = records.find(function (item) {
+  const exists = records.some(function (item) {
     return item.id === id;
   });
-  if (!target) return;
-
-  const confirmed = confirm('确认删除条目：' + target.productName + ' ?');
-  if (!confirmed) return;
+  if (!exists) return;
 
   records = records.filter(function (item) {
     return item.id !== id;
   });
+
+  if (editingRecordId === id) {
+    resetFormForAdd();
+  }
 
   saveRecords();
   renderAll();
@@ -465,27 +512,24 @@ function renderList() {
 
     const card = document.createElement('article');
     card.className = 'record-card';
+    card.dataset.id = record.id;
     card.innerHTML = `
       <div class="record-top">
         <div>
           <h3 class="record-title">${escapeHtml(record.productName)}</h3>
-          <p class="record-vendor">厂商：${escapeHtml(record.vendor)}</p>
         </div>
-        <span class="status-tag ${statusClass}">${escapeHtml(record.paymentStatus)}</span>
+        <button type="button" class="delete-top-btn" data-action="delete" data-id="${record.id}">删除</button>
       </div>
 
       <div class="record-grid">
+        <div class="record-item"><small>厂商</small><span>${escapeHtml(record.vendor)}</span></div>
+        <div class="record-item"><small>补款状态</small><span class="status-chip ${statusClass}">${escapeHtml(record.paymentStatus)}</span></div>
         <div class="record-item"><small>订金</small><span>${formatMoney(record.deposit)}</span></div>
         <div class="record-item"><small>补款</small><span>${formatMoney(record.tailPayment)}</span></div>
         <div class="record-item"><small>优惠</small><span>${formatMoney(record.discount)}</span></div>
         <div class="record-item"><small>总价</small><span>${formatMoney(record.totalPrice)}</span></div>
         <div class="record-item"><small>订购日期</small><span>${escapeHtml(record.orderDate || '-')}</span></div>
         <div class="record-item"><small>入手日期</small><span>${escapeHtml(record.arrivalDate || '-')}</span></div>
-      </div>
-
-      <div class="record-actions">
-        <button type="button" class="btn secondary" data-action="edit" data-id="${record.id}">编辑</button>
-        <button type="button" class="btn danger" data-action="delete" data-id="${record.id}">删除</button>
       </div>
     `;
 
