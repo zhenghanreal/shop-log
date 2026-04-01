@@ -207,11 +207,17 @@ select:focus-visible {
   gap: 8px;
 }
 
+.record-top > div {
+  flex: 1;
+  min-width: 0;
+}
+
 .record-title {
   margin-bottom: 4px;
   font-size: 1rem;
   font-weight: 700;
   color: #111111;
+  overflow-wrap: anywhere;
 }
 
 .delete-top-btn {
@@ -219,10 +225,13 @@ select:focus-visible {
   background: #fff5f4;
   color: #d3473f;
   border-radius: 10px;
+  min-width: 58px;
   min-height: 30px;
   padding: 4px 10px;
   font-size: 0.78rem;
   font-weight: 600;
+  flex-shrink: 0;
+  white-space: nowrap;
   cursor: pointer;
 }
 
