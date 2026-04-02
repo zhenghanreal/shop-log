@@ -12,6 +12,8 @@
   --orange-text: #c46c1b;
   --green-bg: #e8f4ec;
   --green-text: #2f7a56;
+  --abandon-bg: #eef0f4;
+  --abandon-text: #5e6675;
   --radius: 18px;
   --shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
 }
@@ -168,7 +170,7 @@ select:focus-visible {
 }
 
 .filter-summary {
-  margin-top: -2px;
+  margin-top: 4px;
   margin-bottom: 8px;
   font-size: 0.84rem;
   color: var(--muted);
@@ -304,6 +306,11 @@ select:focus-visible {
   color: var(--green-text);
 }
 
+.record-item .status-chip.abandoned {
+  background: var(--abandon-bg);
+  color: var(--abandon-text);
+}
+
 .stats-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -329,6 +336,82 @@ select:focus-visible {
   font-size: 1.08rem;
   font-weight: 700;
   color: #111111;
+}
+
+.year-stat-card {
+  margin-top: 10px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 11px;
+}
+
+.yearly-stat-list {
+  margin-top: 8px;
+  display: grid;
+  gap: 6px;
+}
+
+.yearly-stat-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: #f8f8fb;
+  border-radius: 12px;
+  padding: 8px 10px;
+}
+
+.yearly-year {
+  font-size: 0.87rem;
+  color: #3d4552;
+}
+
+.yearly-amount {
+  font-size: 0.9rem;
+  color: #111111;
+}
+
+.yearly-stat-empty {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 0.83rem;
+}
+
+.stats-help-trigger {
+  margin-top: 10px;
+}
+
+.stat-help-card {
+  margin-top: 10px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 11px;
+}
+
+.stat-help-list {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 8px;
+  color: #2a2a2f;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.stat-help-list li {
+  margin: 0;
+}
+
+.help-modal-card {
+  padding: 10px 12px;
+}
+
+.help-modal-card .stat-help-list {
+  margin-top: 0;
 }
 
 .tool-actions,

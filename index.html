@@ -18,7 +18,7 @@
     <section class="tab-section" aria-label="页面切换">
       <div class="tab-group">
         <button id="tabListBtn" type="button" class="tab-btn active">条目列表</button>
-        <button id="tabStatsBtn" type="button" class="tab-btn">统计 / 数据</button>
+        <button id="tabStatsBtn" type="button" class="tab-btn">统计数据</button>
       </div>
     </section>
 
@@ -32,7 +32,7 @@
         </section>
 
         <section class="list-section" aria-label="条目列表">
-          <h2>条目列表</h2>
+          <h3>条目列表</h3>
           <p id="filterSummary" class="filter-summary">当前筛选：全部条目</p>
           <p id="emptyState" class="empty-state">暂无条目，点击上方“新增条目”开始记录。</p>
           <div id="recordList" class="record-list"></div>
@@ -60,6 +60,13 @@
               <strong id="statTotal" class="stat-value">¥0.00</strong>
             </article>
           </div>
+
+          <article class="year-stat-card">
+            <span class="stat-label">年份消费（按入手年汇总，放弃按订购年）</span>
+            <div id="yearlyStatList" class="yearly-stat-list"></div>
+            <p id="yearlyStatEmpty" class="yearly-stat-empty hidden">暂无可统计的年份数据。</p>
+          </article>
+          <button id="openStatsHelpBtn" type="button" class="btn secondary stats-help-trigger">查看统计说明</button>
         </section>
 
         <section class="tool-section" aria-label="数据操作">
@@ -104,15 +111,15 @@
             <div class="ios-card">
               <label class="ios-row">
                 <span class="ios-row-label">订金</span>
-                <input id="deposit" name="deposit" type="number" inputmode="decimal" min="0" step="0.01" value="0">
+                <input id="deposit" name="deposit" type="number" inputmode="decimal" min="0" step="0.01" placeholder="输入金额">
               </label>
               <label class="ios-row">
                 <span class="ios-row-label">补款</span>
-                <input id="tailPayment" name="tailPayment" type="number" inputmode="decimal" min="0" step="0.01" value="0">
+                <input id="tailPayment" name="tailPayment" type="number" inputmode="decimal" min="0" step="0.01" placeholder="输入金额">
               </label>
               <label class="ios-row">
                 <span class="ios-row-label">优惠</span>
-                <input id="discount" name="discount" type="number" inputmode="decimal" min="0" step="0.01" value="0">
+                <input id="discount" name="discount" type="number" inputmode="decimal" min="0" step="0.01" placeholder="输入金额">
               </label>
               <label class="ios-row">
                 <span class="ios-row-label">总价（自动）</span>
@@ -137,6 +144,7 @@
                 <select id="paymentStatus" name="paymentStatus">
                   <option value="未补">未补</option>
                   <option value="已补">已补</option>
+                  <option value="放弃">放弃</option>
                 </select>
               </label>
             </div>
@@ -177,7 +185,12 @@
                 <option value="全部">全部</option>
                 <option value="未补">未补</option>
                 <option value="已补">已补</option>
+                <option value="放弃">放弃</option>
               </select>
+            </label>
+            <label class="ios-row">
+              <span class="ios-row-label">入手年份</span>
+              <input id="arrivalYearFilter" type="number" inputmode="numeric" min="1900" max="2999" placeholder="例如 2026">
             </label>
           </div>
         </section>
@@ -206,6 +219,35 @@
       <div class="filter-actions">
         <button id="confirmDeleteBtn" type="button" class="btn danger">确认删除</button>
         <button id="cancelDeleteBtn" type="button" class="btn ghost">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="statsHelpModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="statsHelpTitle">
+    <div class="modal-panel modal-panel-filter">
+      <div class="modal-head">
+        <button id="closeStatsHelpModalBtn" type="button" class="nav-btn">关闭</button>
+        <h2 id="statsHelpTitle">统计说明</h2>
+        <span class="nav-placeholder" aria-hidden="true"></span>
+      </div>
+
+      <div class="ios-form">
+        <section class="ios-group">
+          <h3 class="ios-group-title">计算方式</h3>
+          <div class="ios-card help-modal-card">
+            <ul class="stat-help-list">
+              <li><strong>未补款订金</strong>：仅统计状态 = 未补的条目，求和字段 = 订金。</li>
+              <li><strong>未补款金额</strong>：仅统计状态 = 未补的条目，求和字段 = 补款（待补金额）。</li>
+              <li><strong>已消费（不含未补款）</strong>：未补：max(订金 - 优惠, 0)；已补：总价；放弃：max(订金 - 优惠, 0)。</li>
+              <li><strong>总消费（含未补款）</strong>：未补：总价；已补：总价；放弃：max(订金 - 优惠, 0)。</li>
+              <li><strong>年份消费</strong>：按年份累计总价。未补/已补按入手日期年份；放弃按订购日期年份。</li>
+            </ul>
+          </div>
+        </section>
+      </div>
+
+      <div class="filter-actions">
+        <button id="statsHelpDoneBtn" type="button" class="btn primary">我知道了</button>
       </div>
     </div>
   </div>

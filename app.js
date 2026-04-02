@@ -12,15 +12,19 @@ const dom = {
   statsView: document.getElementById('statsView'),
   openAddModalBtn: document.getElementById('openAddModalBtn'),
   openFilterModalBtn: document.getElementById('openFilterModalBtn'),
+  openStatsHelpBtn: document.getElementById('openStatsHelpBtn'),
   entryModal: document.getElementById('entryModal'),
   filterModal: document.getElementById('filterModal'),
   deleteModal: document.getElementById('deleteModal'),
+  statsHelpModal: document.getElementById('statsHelpModal'),
   closeModalBtn: document.getElementById('closeModalBtn'),
   closeFilterModalBtn: document.getElementById('closeFilterModalBtn'),
   closeDeleteModalBtn: document.getElementById('closeDeleteModalBtn'),
+  closeStatsHelpModalBtn: document.getElementById('closeStatsHelpModalBtn'),
   applyFilterBtn: document.getElementById('applyFilterBtn'),
   confirmDeleteBtn: document.getElementById('confirmDeleteBtn'),
   cancelDeleteBtn: document.getElementById('cancelDeleteBtn'),
+  statsHelpDoneBtn: document.getElementById('statsHelpDoneBtn'),
   deleteTargetName: document.getElementById('deleteTargetName'),
   recordForm: document.getElementById('recordForm'),
   formTitle: document.getElementById('formTitle'),
@@ -38,6 +42,7 @@ const dom = {
   searchName: document.getElementById('searchName'),
   searchVendor: document.getElementById('searchVendor'),
   statusFilter: document.getElementById('statusFilter'),
+  arrivalYearFilter: document.getElementById('arrivalYearFilter'),
   resetFilterBtn: document.getElementById('resetFilterBtn'),
   exportBtn: document.getElementById('exportBtn'),
   importBtn: document.getElementById('importBtn'),
@@ -49,7 +54,9 @@ const dom = {
   statUnpaidDeposit: document.getElementById('statUnpaidDeposit'),
   statUnpaidTail: document.getElementById('statUnpaidTail'),
   statSpent: document.getElementById('statSpent'),
-  statTotal: document.getElementById('statTotal')
+  statTotal: document.getElementById('statTotal'),
+  yearlyStatList: document.getElementById('yearlyStatList'),
+  yearlyStatEmpty: document.getElementById('yearlyStatEmpty')
 };
 
 init();
@@ -73,12 +80,15 @@ function bindEvents() {
 
   dom.openAddModalBtn.addEventListener('click', openAddModal);
   dom.openFilterModalBtn.addEventListener('click', openFilterModal);
+  dom.openStatsHelpBtn.addEventListener('click', openStatsHelpModal);
   dom.closeModalBtn.addEventListener('click', closeModal);
   dom.closeFilterModalBtn.addEventListener('click', closeFilterModal);
   dom.closeDeleteModalBtn.addEventListener('click', closeDeleteModal);
+  dom.closeStatsHelpModalBtn.addEventListener('click', closeStatsHelpModal);
   dom.applyFilterBtn.addEventListener('click', applyFilters);
   dom.confirmDeleteBtn.addEventListener('click', confirmDeleteRecord);
   dom.cancelDeleteBtn.addEventListener('click', closeDeleteModal);
+  dom.statsHelpDoneBtn.addEventListener('click', closeStatsHelpModal);
 
   dom.entryModal.addEventListener('click', function (event) {
     if (event.target === dom.entryModal) {
@@ -95,9 +105,19 @@ function bindEvents() {
       closeDeleteModal();
     }
   });
+  dom.statsHelpModal.addEventListener('click', function (event) {
+    if (event.target === dom.statsHelpModal) {
+      closeStatsHelpModal();
+    }
+  });
 
   document.addEventListener('keydown', function (event) {
     if (event.key !== 'Escape') return;
+
+    if (!dom.statsHelpModal.classList.contains('hidden')) {
+      closeStatsHelpModal();
+      return;
+    }
 
     if (!dom.deleteModal.classList.contains('hidden')) {
       closeDeleteModal();
@@ -162,6 +182,11 @@ function openFilterModal() {
   updateModalBodyState();
 }
 
+function openStatsHelpModal() {
+  dom.statsHelpModal.classList.remove('hidden');
+  updateModalBodyState();
+}
+
 function showModal() {
   dom.entryModal.classList.remove('hidden');
   updateModalBodyState();
@@ -200,6 +225,11 @@ function closeDeleteModal() {
   updateModalBodyState();
 }
 
+function closeStatsHelpModal() {
+  dom.statsHelpModal.classList.add('hidden');
+  updateModalBodyState();
+}
+
 function confirmDeleteRecord() {
   if (!pendingDeleteId) {
     closeDeleteModal();
@@ -219,7 +249,8 @@ function updateModalBodyState() {
   const hasOpenModal =
     !dom.entryModal.classList.contains('hidden') ||
     !dom.filterModal.classList.contains('hidden') ||
-    !dom.deleteModal.classList.contains('hidden');
+    !dom.deleteModal.classList.contains('hidden') ||
+    !dom.statsHelpModal.classList.contains('hidden');
   document.body.classList.toggle('modal-open', hasOpenModal);
 }
 
@@ -265,6 +296,25 @@ function normalizeNumber(value) {
   return roundMoney(numberValue);
 }
 
+function normalizeStatus(value) {
+  if (value === '未补' || value === '已补' || value === '放弃') {
+    return value;
+  }
+  return '未补';
+}
+
+function getStatusClass(status) {
+  if (status === '已补') return 'paid';
+  if (status === '放弃') return 'abandoned';
+  return 'unpaid';
+}
+
+function getYearFromDate(dateText) {
+  if (!dateText) return '';
+  const year = String(dateText).slice(0, 4);
+  return /^\d{4}$/.test(year) ? year : '';
+}
+
 function normalizeRecord(raw) {
   if (!raw || typeof raw !== 'object') return null;
 
@@ -283,7 +333,7 @@ function normalizeRecord(raw) {
     totalPrice: totalPrice,
     orderDate: normalizeDate(raw.orderDate),
     arrivalDate: normalizeDate(raw.arrivalDate),
-    paymentStatus: raw.paymentStatus === '已补' ? '已补' : '未补',
+    paymentStatus: normalizeStatus(raw.paymentStatus),
     createdAt: raw.createdAt || new Date().toISOString(),
     updatedAt: raw.updatedAt || new Date().toISOString()
   };
@@ -347,7 +397,7 @@ function handleFormSubmit(event) {
     totalPrice: totalPrice,
     orderDate: normalizeDate(dom.orderDate.value),
     arrivalDate: normalizeDate(dom.arrivalDate.value),
-    paymentStatus: dom.paymentStatus.value === '已补' ? '已补' : '未补'
+    paymentStatus: normalizeStatus(dom.paymentStatus.value)
   };
 
   if (editingRecordId) {
@@ -414,9 +464,9 @@ function resetFormForAdd() {
   dom.submitBtn.textContent = '新增条目';
   dom.cancelEditBtn.classList.add('hidden');
   dom.recordForm.reset();
-  dom.deposit.value = '0';
-  dom.tailPayment.value = '0';
-  dom.discount.value = '0';
+  dom.deposit.value = '';
+  dom.tailPayment.value = '';
+  dom.discount.value = '';
   dom.paymentStatus.value = '未补';
   updateTotalPreview();
 }
@@ -447,12 +497,17 @@ function getFilteredRecords() {
   const nameKeyword = dom.searchName.value.trim().toLowerCase();
   const vendorKeyword = dom.searchVendor.value.trim().toLowerCase();
   const statusValue = dom.statusFilter.value;
+  const arrivalYear = dom.arrivalYearFilter.value.trim();
 
   return getSortedRecords().filter(function (record) {
     const matchName = !nameKeyword || record.productName.toLowerCase().includes(nameKeyword);
     const matchVendor = !vendorKeyword || record.vendor.toLowerCase().includes(vendorKeyword);
     const matchStatus = statusValue === '全部' || record.paymentStatus === statusValue;
-    return matchName && matchVendor && matchStatus;
+    const matchArrivalYear =
+      !arrivalYear ||
+      (record.arrivalDate &&
+        record.arrivalDate.slice(0, 4) === arrivalYear);
+    return matchName && matchVendor && matchStatus && matchArrivalYear;
   });
 }
 
@@ -472,18 +527,30 @@ function renderStats() {
   let unpaidTail = 0;
   let spent = 0;
   let total = 0;
+  const yearlyTotals = {};
 
   records.forEach(function (record) {
-    total += record.totalPrice;
+    const status = normalizeStatus(record.paymentStatus);
+    const paidPart = Math.max(record.deposit - record.discount, 0);
+    const yearSourceDate = status === '放弃' ? record.orderDate : record.arrivalDate;
+    const yearKey = getYearFromDate(yearSourceDate);
+    if (yearKey) {
+      yearlyTotals[yearKey] = (yearlyTotals[yearKey] || 0) + record.totalPrice;
+    }
 
-    if (record.paymentStatus === '未补') {
+    if (status === '未补') {
       unpaidDeposit += record.deposit;
       unpaidTail += record.tailPayment;
 
-      const currentSpent = Math.max(record.deposit - record.discount, 0);
-      spent += currentSpent;
-    } else {
+      spent += paidPart;
+      total += record.totalPrice;
+    } else if (status === '已补') {
       spent += record.totalPrice;
+      total += record.totalPrice;
+    } else {
+      // 放弃条目不再计入待补金额，消费按已实际支出部分统计。
+      spent += paidPart;
+      total += paidPart;
     }
   });
 
@@ -496,6 +563,36 @@ function renderStats() {
   dom.statUnpaidTail.textContent = formatMoney(unpaidTail);
   dom.statSpent.textContent = formatMoney(spent);
   dom.statTotal.textContent = formatMoney(total);
+  renderYearlyStats(yearlyTotals);
+}
+
+function renderYearlyStats(yearlyTotals) {
+  dom.yearlyStatList.innerHTML = '';
+
+  const entries = Object.entries(yearlyTotals)
+    .map(function (pair) {
+      return [pair[0], roundMoney(pair[1])];
+    })
+    .sort(function (a, b) {
+      return Number(b[0]) - Number(a[0]);
+    });
+
+  if (!entries.length) {
+    dom.yearlyStatEmpty.classList.remove('hidden');
+    return;
+  }
+
+  dom.yearlyStatEmpty.classList.add('hidden');
+
+  entries.forEach(function (entry) {
+    const row = document.createElement('div');
+    row.className = 'yearly-stat-row';
+    row.innerHTML = `
+      <span class="yearly-year">${escapeHtml(entry[0])} 年</span>
+      <strong class="yearly-amount">${formatMoney(entry[1])}</strong>
+    `;
+    dom.yearlyStatList.appendChild(row);
+  });
 }
 
 function renderList() {
@@ -508,7 +605,7 @@ function renderList() {
   if (!list.length) return;
 
   list.forEach(function (record) {
-    const statusClass = record.paymentStatus === '已补' ? 'paid' : 'unpaid';
+    const statusClass = getStatusClass(record.paymentStatus);
 
     const card = document.createElement('article');
     card.className = 'record-card';
@@ -541,6 +638,7 @@ function resetFilters() {
   dom.searchName.value = '';
   dom.searchVendor.value = '';
   dom.statusFilter.value = '全部';
+  dom.arrivalYearFilter.value = '';
   renderList();
 }
 
@@ -548,11 +646,13 @@ function updateFilterSummary() {
   const nameKeyword = dom.searchName.value.trim();
   const vendorKeyword = dom.searchVendor.value.trim();
   const statusValue = dom.statusFilter.value;
+  const arrivalYear = dom.arrivalYearFilter.value.trim();
   const parts = [];
 
   if (nameKeyword) parts.push('商品名称=' + nameKeyword);
   if (vendorKeyword) parts.push('厂商=' + vendorKeyword);
   if (statusValue !== '全部') parts.push('状态=' + statusValue);
+  if (arrivalYear) parts.push('入手年份=' + arrivalYear);
 
   dom.filterSummary.textContent = parts.length
     ? '当前筛选：' + parts.join('，')
